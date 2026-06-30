@@ -42,12 +42,22 @@
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
+  scrollbar-width: none; /* Firefox — no visible scrollbars anywhere */
+}
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none; /* WebKit/Blink — no visible scrollbars anywhere */
 }
 
 html,
 body,
 #root {
   height: 100%;
+}
+html,
+body {
+  overflow-x: hidden; /* never a horizontal scrollbar */
 }
 
 body {
@@ -87,16 +97,9 @@ select {
     
   }
 }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
 @keyframes fadeIn {
-  from { opacity: 0;  }
-  to { opacity: 1;  }
-}
+  from { opacity: 0; }
   to { opacity: 1; }
 }
 
@@ -737,6 +740,10 @@ h1.title {
   flex: 1;
   display: flex;
   flex-direction: column;
+  /* center the whole block so spare height splits evenly top/bottom;
+     `safe` falls back to top-alignment on short screens (no clipped header) */
+  justify-content: safe center;
+  min-height: 0;
 }
 .landing-hero {
   flex: 1;
@@ -905,7 +912,7 @@ h1.title {
   opacity: 0;
 }
 .orb.speaking .orb-core {
-  animation: breathe 0.3s var(--ease-smooth)-in-out infinite;
+  animation: breathe 1.7s ease-in-out infinite;
 }
 .orb.listening .orb-core {
   background: radial-gradient(circle at 35% 30%, var(--accent-soft), var(--accent));
@@ -916,7 +923,7 @@ h1.title {
   50% { transform: scale(1.06); }
 }
 .orb.listening .orb-ring {
-  animation: ripple 0.3s var(--ease-smooth)-out infinite;
+  animation: ripple 1.9s ease-out infinite;
 }
 .orb .orb-ring:nth-child(2) {
   animation-delay: 0.6s;
@@ -939,7 +946,7 @@ h1.title {
   height: 8px;
   border-radius: 2px;
   background: #fff;
-  animation: bar 0.3s var(--ease-smooth)-in-out infinite;
+  animation: bar 0.9s ease-in-out infinite;
 }
 .bars span:nth-child(2) { animation-delay: 0.15s; }
 .bars span:nth-child(3) { animation-delay: 0.3s; }
@@ -1347,5 +1354,591 @@ h1.title {
 }
 .meta > div:nth-child(3) svg {
   animation-delay: 0.8s;
+}
+
+/* =========================================
+   PREMIUM POLISH v2 — hero moments
+   (transform / opacity / filter only · 60fps)
+   ========================================= */
+
+/* ── Voice orb: living aura, slow float, rotating halo ─────────────────── */
+.orb { isolation: isolate; }
+
+/* soft breathing aura behind the orb */
+.orb::before {
+  content: '';
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(111, 140, 184, 0.5), transparent 68%);
+  filter: blur(12px);
+  z-index: 0;
+  animation: auraPulse 3.6s ease-in-out infinite;
+}
+.orb.listening::before {
+  background: radial-gradient(circle, rgba(232, 98, 61, 0.55), transparent 68%);
+}
+@keyframes auraPulse {
+  0%, 100% { transform: scale(0.9); opacity: 0.55; }
+  50% { transform: scale(1.14); opacity: 1; }
+}
+
+/* thin rotating halo ring */
+.orb::after {
+  content: '';
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    rgba(111, 140, 184, 0.7) 22%,
+    transparent 46%,
+    rgba(111, 140, 184, 0.35) 72%,
+    transparent 100%
+  );
+  -webkit-mask: radial-gradient(circle, transparent 64px, #000 65px, #000 73px, transparent 74px);
+  mask: radial-gradient(circle, transparent 64px, #000 65px, #000 73px, transparent 74px);
+  z-index: 0;
+  opacity: 0.65;
+  animation: spin 9s linear infinite;
+}
+.orb.listening::after {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    rgba(232, 98, 61, 0.7) 22%,
+    transparent 46%,
+    rgba(232, 98, 61, 0.35) 72%,
+    transparent 100%
+  );
+  animation-duration: 5s;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* gentle idle float (overridden by `breathe` while speaking) */
+.orb-core {
+  animation: orbFloat 5.5s ease-in-out infinite;
+}
+@keyframes orbFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* ── Reccard: slow diagonal light sheen ────────────────────────────────── */
+.reccard {
+  position: relative;
+  overflow: hidden;
+}
+.reccard::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: -70%;
+  width: 45%;
+  height: 140%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgba(255, 255, 255, 0.14),
+    transparent
+  );
+  transform: skewX(-18deg);
+  animation: cardSheen 5s ease-in-out 1s infinite;
+  pointer-events: none;
+}
+@keyframes cardSheen {
+  0% { left: -70%; }
+  45%, 100% { left: 130%; }
+}
+.reccard > * { position: relative; z-index: 1; }
+
+/* ── Sheen sweep on solid buttons (hover) ──────────────────────────────── */
+.btn-primary,
+.btn-accent,
+.mic-btn {
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary > *,
+.btn-accent > *,
+.mic-btn > * {
+  position: relative;
+  z-index: 1;
+}
+.btn-primary::after,
+.btn-accent::after,
+.mic-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -80%;
+  width: 55%;
+  height: 100%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgba(255, 255, 255, 0.28),
+    transparent
+  );
+  transform: skewX(-20deg);
+  pointer-events: none;
+  opacity: 0;
+}
+.btn-primary:hover::after,
+.btn-accent:hover::after,
+.mic-btn:hover::after {
+  opacity: 1;
+  animation: btnSheen 0.85s ease;
+}
+@keyframes btnSheen {
+  from { left: -80%; }
+  to { left: 130%; }
+}
+
+/* ── Choice card: accent edge that grows on select ─────────────────────── */
+.choice {
+  position: relative;
+  overflow: hidden;
+}
+.choice::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(var(--denim), var(--indigo));
+  transform: scaleY(0);
+  transition: transform 0.35s var(--ease-bounce);
+}
+.choice.selected::before {
+  transform: scaleY(1);
+}
+
+/* ── Landing: self-drawing accent underline beneath "actually" ─────────── */
+.landing h1 em {
+  position: relative;
+}
+.landing h1 em::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  right: 10px;
+  bottom: 4px;
+  height: 4px;
+  border-radius: 3px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: drawUnderline 0.7s var(--ease-smooth) 1.15s forwards;
+}
+@keyframes drawUnderline {
+  to { transform: scaleX(1); }
+}
+
+/* ── Mode card: pill drops onto its own line cleanly ───────────────────── */
+.mc-title {
+  flex-wrap: wrap;
+}
+.mc-titletext {
+  white-space: nowrap;
+}
+
+/* ── Count-up figures don't jiggle the layout ──────────────────────────── */
+.rc-size,
+.confidence b,
+.reccard .rc-grid .v {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Respect reduced-motion preferences ────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.05ms !important;
+  }
+}
+
+/* =========================================
+   TEXTURE, DEPTH & EDITORIAL LANDING (v3)
+   Denim craft: grain · twill · topstitch · rivets
+   ========================================= */
+
+:root {
+  --shadow-card:
+    0 1px 1px rgba(20, 19, 26, 0.04),
+    0 5px 10px rgba(20, 19, 26, 0.05),
+    0 18px 36px rgba(20, 19, 26, 0.09);
+  --shadow-float:
+    0 2px 4px rgba(20, 19, 26, 0.06),
+    0 14px 28px rgba(20, 19, 26, 0.1),
+    0 36px 64px rgba(42, 42, 82, 0.16);
+  --shadow-denim:
+    0 14px 36px rgba(26, 26, 58, 0.44),
+    0 3px 10px rgba(26, 26, 58, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -22px 44px rgba(0, 0, 0, 0.22);
+  --twill: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.05) 0 1px,
+    transparent 1px 4px
+  );
+}
+
+/* Richer denim/cream wash (kept on .app so it never adds a fixed-overflow bar) */
+.app {
+  background:
+    radial-gradient(100% 60% at 100% 0%, rgba(111, 140, 184, 0.13), transparent 55%),
+    radial-gradient(90% 55% at 0% 100%, rgba(232, 98, 61, 0.07), transparent 55%),
+    radial-gradient(120% 80% at 50% -10%, var(--cream-2) 0%, var(--cream) 58%);
+}
+
+/* Film-grain tooth across everything — the single biggest "not-flat" move */
+.app::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  opacity: 0.055;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
+/* ── Rating chip (top-right trust signal) ──────────────────────────────── */
+.rating-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-full);
+  padding: 6px 11px;
+  box-shadow: var(--shadow-card);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.rating-chip .stars {
+  color: var(--accent);
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+.rating-chip .rating-count {
+  color: var(--ink-faint);
+  font-weight: 600;
+}
+
+/* ── Kicker pill ───────────────────────────────────────────────────────── */
+.landing .kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(232, 98, 61, 0.1);
+  border: 1px solid rgba(232, 98, 61, 0.28);
+  padding: 7px 14px 7px 12px;
+  border-radius: var(--r-full);
+  margin-bottom: 2px;
+  font-size: 11px;
+}
+.kicker-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulseDot 2s ease-in-out infinite;
+}
+@keyframes pulseDot {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 98, 61, 0.55); }
+  70% { box-shadow: 0 0 0 7px rgba(232, 98, 61, 0); }
+}
+
+/* ── Editorial headline ────────────────────────────────────────────────── */
+.landing .landing-hero {
+  padding: clamp(2px, 1vh, 12px) 0 clamp(2px, 0.5vh, 4px);
+  flex: 0 0 auto;
+}
+.landing .hero-headline-wrap {
+  position: relative;
+}
+.landing .hero-title {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(44px, 15vw, 66px);
+  line-height: 0.94;
+  letter-spacing: -0.04em;
+  margin: 12px 0 18px;
+  color: var(--ink);
+}
+.landing .hero-title .w {
+  display: inline-block;
+  will-change: transform;
+}
+.landing .hero-em {
+  font-style: italic;
+  color: var(--denim);
+  position: relative;
+  padding-right: 4px;
+}
+.landing .hero-em::after {
+  content: '';
+  position: absolute;
+  left: -3px;
+  right: -2px;
+  bottom: 3px;
+  height: 12px;
+  background: var(--accent);
+  opacity: 0.82;
+  border-radius: 3px;
+  transform: scaleX(0) skewX(-10deg);
+  transform-origin: left;
+  animation: drawUnderline 0.6s var(--ease-smooth) 1.3s forwards;
+  z-index: -1;
+}
+
+/* ── Rotating "perfect fit" seal stamp ─────────────────────────────────── */
+.seal-badge {
+  position: absolute;
+  top: -6px;
+  right: -2px;
+  width: 88px;
+  height: 88px;
+  display: grid;
+  place-items: center;
+  filter: drop-shadow(0 8px 16px rgba(42, 42, 82, 0.22));
+}
+.seal-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  animation: spin 16s linear infinite;
+}
+.seal-text {
+  font-family: var(--sans);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  fill: var(--indigo);
+}
+.seal-center {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.32),
+    0 4px 10px rgba(232, 98, 61, 0.4);
+}
+.seal-center b {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  font-family: var(--serif);
+}
+.seal-center small {
+  font-size: 6px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  margin-top: 2px;
+}
+
+/* ── Sub + stitched meta ───────────────────────────────────────────────── */
+.landing .sub {
+  font-size: 16px;
+  line-height: 1.55;
+  max-width: 21em;
+  margin-bottom: 0;
+}
+.landing .meta {
+  gap: 12px;
+  align-items: center;
+  margin-top: 20px;
+}
+.meta-stitch {
+  width: 14px;
+  height: 0;
+  border-top: 2px dashed var(--line-strong);
+  opacity: 0.55;
+}
+
+/* ── Brand marquee ─────────────────────────────────────────────────────── */
+.landing .ticker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 14px;
+}
+.ticker-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  flex: 0 0 auto;
+}
+.ticker-window {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 12%, #000 86%, transparent);
+  mask: linear-gradient(90deg, transparent, #000 12%, #000 86%, transparent);
+}
+.ticker-track {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  white-space: nowrap;
+  animation: marquee 24s linear infinite;
+}
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+.ticker-star {
+  color: var(--accent);
+  font-style: normal;
+  font-size: 9px;
+}
+@keyframes marquee {
+  to { transform: translateX(-50%); }
+}
+
+/* ── Dimensional denim mode cards ──────────────────────────────────────── */
+.landing .mode-cards {
+  gap: 14px;
+  margin-top: 26px; /* small, consistent gap below the text on every screen */
+}
+.landing .mode-card {
+  border-radius: 22px;
+  padding: 18px;
+  gap: 15px;
+  transition: transform 0.4s var(--ease-bounce), box-shadow 0.4s var(--ease-bounce);
+}
+.landing .mode-card.voice {
+  background:
+    var(--twill),
+    radial-gradient(130% 110% at 0% 0%, #34345f, var(--indigo-deep));
+  color: var(--paper);
+  box-shadow: var(--shadow-denim);
+  border: none;
+}
+.landing .mode-card.manual {
+  background: var(--paper);
+  color: var(--ink);
+  border: 1.5px solid var(--line);
+  box-shadow: var(--shadow-card);
+}
+.landing .mode-card:hover {
+  transform: translateY(-4px) scale(1.02);
+}
+.landing .mode-card.voice:hover {
+  box-shadow:
+    0 22px 50px rgba(26, 26, 58, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -22px 44px rgba(0, 0, 0, 0.22);
+}
+.landing .mode-card.manual:hover {
+  box-shadow: var(--shadow-float);
+}
+
+/* topstitch outline */
+.landing .mode-card::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border-radius: 16px;
+  border: 1.5px dashed rgba(255, 255, 255, 0.32);
+  pointer-events: none;
+  z-index: 1;
+}
+.landing .mode-card.manual::before {
+  border-color: rgba(20, 19, 26, 0.14);
+}
+
+/* copper rivets */
+.rivet {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffd9a0, var(--accent));
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  z-index: 2;
+}
+.rivet-tl { top: 12px; left: 12px; }
+.rivet-br { bottom: 12px; right: 40px; }
+
+.landing .mc-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 15px;
+  position: relative;
+  z-index: 2;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 6px 14px rgba(0, 0, 0, 0.18);
+}
+.landing .mode-card.voice .mc-icon {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.06));
+  color: #fff;
+}
+.mc-icon-pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 15px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  animation: iconPulse 2.6s ease-out infinite;
+}
+@keyframes iconPulse {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(1.45); opacity: 0; }
+}
+.mc-body {
+  flex: 1;
+  min-width: 0;
+  z-index: 2;
+}
+.landing .mc-arrow {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  margin-left: auto;
+  z-index: 2;
+  opacity: 1;
+  transition: transform 0.3s var(--ease-bounce);
+}
+.landing .mode-card.voice .mc-arrow {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+.landing .mode-card.manual .mc-arrow {
+  background: var(--cream);
+  color: var(--indigo);
+}
+.landing .mode-card:hover .mc-arrow {
+  transform: translateX(5px);
 }
 

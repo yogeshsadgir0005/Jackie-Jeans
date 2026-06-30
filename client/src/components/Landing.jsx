@@ -9,40 +9,111 @@ const fade = {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: { delay: 0.3 + (0.08 * i), duration: 0.6, ease: [0.16, 1, 0.3, 1] },
+    transition: { delay: 0.3 + 0.08 * i, duration: 0.6, ease: [0.16, 1, 0.3, 1] },
   }),
 }
 
 const wordVariant = {
-  hidden: { opacity: 0, y: 20, scale: 0.9 },
-  show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } }
+  hidden: { opacity: 0, y: 24, scale: 0.9, rotate: -3 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    rotate: 0,
+    transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] },
+  },
 }
 
 const titleVariant = {
   hidden: { opacity: 1 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.08, delayChildren: 0.35 }
-  }
+  show: { opacity: 1, transition: { staggerChildren: 0.07, delayChildren: 0.35 } },
+}
+
+// Brands we calibrate against — doubles as the marquee content.
+const TICKER = [
+  "Levi's",
+  'Madewell',
+  'AGOLDE',
+  'Wrangler',
+  'Re/Done',
+  'Mother',
+  'Citizens of Humanity',
+  'Good American',
+  'Frame',
+  'Lee',
+]
+
+// A rotating circular "stamp" seal — curved text on an SVG path.
+function Seal() {
+  return (
+    <svg className="seal-svg" viewBox="0 0 120 120" aria-hidden="true">
+      <defs>
+        <path
+          id="sealArc"
+          d="M60,60 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0"
+        />
+      </defs>
+      <text className="seal-text">
+        <textPath href="#sealArc" startOffset="0">
+          PERFECT&nbsp;FIT&nbsp;·&nbsp;NO&nbsp;MORE&nbsp;RETURNS&nbsp;·&nbsp;
+        </textPath>
+      </text>
+    </svg>
+  )
 }
 
 export default function Landing({ onPick }) {
   const voiceOk = speechSupported()
   return (
-    <div className="shell">
-      <TopBar />
+    <div className="shell landing-shell">
+      <TopBar
+       
+      />
+
       <div className="landing">
         <div className="landing-hero">
-          <motion.div variants={fade} initial="hidden" animate="show" custom={0}>
-            <span className="eyebrow">The Fit Quiz</span>
-          </motion.div>
-          <motion.h1 variants={titleVariant} initial="hidden" animate="show" className="title-stagger">
-            <motion.span variants={wordVariant} style={{ display: 'inline-block' }}>Jeans&nbsp;</motion.span>
-            <motion.span variants={wordVariant} style={{ display: 'inline-block' }}>that&nbsp;</motion.span>
-            <motion.em variants={wordVariant} style={{ display: 'inline-block' }}>actually&nbsp;</motion.em>
-            <motion.span variants={wordVariant} style={{ display: 'inline-block' }}>fit&nbsp;</motion.span>
-            <motion.span variants={wordVariant} style={{ display: 'inline-block' }}>you.</motion.span>
-          </motion.h1>
+       
+
+          <div className="hero-headline-wrap">
+            <motion.h1
+              variants={titleVariant}
+              initial="hidden"
+              animate="show"
+              className="hero-title"
+            >
+              <motion.span variants={wordVariant} className="w">
+                Jeans&nbsp;
+              </motion.span>
+              <motion.span variants={wordVariant} className="w">
+                that
+              </motion.span>
+              <br />
+              <motion.em variants={wordVariant} className="w hero-em">
+                actually
+              </motion.em>
+              <br />
+              <motion.span variants={wordVariant} className="w">
+                fit&nbsp;
+              </motion.span>
+              <motion.span variants={wordVariant} className="w">
+                you.
+              </motion.span>
+            </motion.h1>
+
+            <motion.div
+              className="seal-badge"
+              initial={{ opacity: 0, scale: 0.4, rotate: -40 }}
+              animate={{ opacity: 1, scale: 1, rotate: -12 }}
+              transition={{ delay: 0.95, type: 'spring', stiffness: 150, damping: 11 }}
+            >
+              <Seal />
+              <span className="seal-center">
+                <b>98%</b>
+                <small>FIT MATCH</small>
+              </span>
+            </motion.div>
+          </div>
+
           <motion.p
             className="sub"
             variants={fade}
@@ -50,9 +121,10 @@ export default function Landing({ onPick }) {
             animate="show"
             custom={2}
           >
-            Answer a few quick questions and we’ll find your size, rise and cut
-            with confidence — no more guessing, no more returns.
+            One short quiz finds your exact size, rise and cut — calibrated
+            against the brands you already own.
           </motion.p>
+
           <motion.div
             className="meta"
             variants={fade}
@@ -61,16 +133,38 @@ export default function Landing({ onPick }) {
             custom={3}
           >
             <div>
-              <Sparkle size={16} /> <b>10</b> questions
+              <Sparkle size={15} /> <b>10</b> questions
             </div>
+            <span className="meta-stitch" />
             <div>
-              <Clock size={16} /> <b>~90</b> seconds
+              <Clock size={15} /> <b>~90</b> sec
             </div>
+            <span className="meta-stitch" />
             <div>
-              <Lock size={16} /> Private
+              <Lock size={15} /> Private
             </div>
           </motion.div>
         </div>
+
+        <motion.div
+          className="ticker"
+          variants={fade}
+          initial="hidden"
+          animate="show"
+          custom={4}
+        >
+          <span className="ticker-label">Calibrated&nbsp;on</span>
+          <div className="ticker-window">
+            <div className="ticker-track">
+              {[...TICKER, ...TICKER].map((b, i) => (
+                <span className="ticker-item" key={i}>
+                  {b}
+                  <span className="ticker-star">✦</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        </motion.div>
 
         <div className="mode-cards">
           <motion.button
@@ -78,18 +172,22 @@ export default function Landing({ onPick }) {
             variants={fade}
             initial="hidden"
             animate="show"
-            custom={4}
+            custom={5}
             onClick={() => onPick('voice')}
           >
+            <span className="rivet rivet-tl" />
+            <span className="rivet rivet-br" />
             <div className="mc-icon">
+              <span className="mc-icon-pulse" />
               <Mic />
             </div>
-            <div>
+            <div className="mc-body">
               <div className="mc-title">
-                Talk it through <span className="pill">AI Voice Assistant</span>
+                <span className="mc-titletext">Talk it through</span>
+                <span className="pill">AI Voice</span>
               </div>
               <div className="mc-sub">
-                Speak naturally — our stylist asks, listens and fills it in.
+                Speak naturally — Jackie asks, listens and fills it in.
               </div>
             </div>
             <div className="mc-arrow">
@@ -102,14 +200,16 @@ export default function Landing({ onPick }) {
             variants={fade}
             initial="hidden"
             animate="show"
-            custom={5}
+            custom={6}
             onClick={() => onPick('manual')}
           >
             <div className="mc-icon">
               <Pencil />
             </div>
-            <div>
-              <div className="mc-title">Tap it in</div>
+            <div className="mc-body">
+              <div className="mc-title">
+                <span className="mc-titletext">Tap it in</span>
+              </div>
               <div className="mc-sub">
                 A calm, guided form — one question at a time.
               </div>
@@ -122,8 +222,8 @@ export default function Landing({ onPick }) {
 
         {!voiceOk && (
           <p className="hint">
-            Tip: the voice experience works best in Chrome, Edge or Android
-            Chrome. The manual flow works everywhere.
+            Tip: voice works best in Chrome, Edge or Android Chrome. The manual
+            flow works everywhere.
           </p>
         )}
       </div>

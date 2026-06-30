@@ -8,8 +8,33 @@ import { saveProfile } from '../lib/api.js'
 
 const REDIRECT_SECONDS = 6
 
+// Animate a number from 0 → target with an ease-out curve.
+function useCountUp(target, duration = 1100, delay = 400) {
+  const [val, setVal] = useState(0)
+  useEffect(() => {
+    let raf
+    let start
+    const timer = setTimeout(() => {
+      const step = (ts) => {
+        if (!start) start = ts
+        const p = Math.min(1, (ts - start) / duration)
+        const eased = 1 - Math.pow(1 - p, 3) // easeOutCubic
+        setVal(Math.round(target * eased))
+        if (p < 1) raf = requestAnimationFrame(step)
+      }
+      raf = requestAnimationFrame(step)
+    }, delay)
+    return () => {
+      clearTimeout(timer)
+      cancelAnimationFrame(raf)
+    }
+  }, [target, duration, delay])
+  return val
+}
+
 export default function Complete({ answers, mode, onEdit }) {
   const rec = useMemo(() => buildRecommendation(answers), [answers])
+  const confidence = useCountUp(rec.confidence)
   const [persisted, setPersisted] = useState(null) // null | true | false
   const [count, setCount] = useState(REDIRECT_SECONDS)
   const [paused, setPaused] = useState(false)
@@ -73,7 +98,14 @@ export default function Complete({ answers, mode, onEdit }) {
           transition={{ delay: 0.15, duration: 0.5 }}
         >
           <div className="rc-eyebrow">Recommended starting size</div>
-          <div className="rc-size">{rec.size}</div>
+          <motion.div
+            className="rc-size"
+            initial={{ scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.32, type: 'spring', stiffness: 200, damping: 13 }}
+          >
+            {rec.size}
+          </motion.div>
 
           <div className="rc-grid">
             <div>
@@ -90,7 +122,7 @@ export default function Complete({ answers, mode, onEdit }) {
             </div>
             <div>
               <div className="k">Confidence</div>
-              <div className="v">{rec.confidence}%</div>
+              <div className="v">{confidence}%</div>
             </div>
           </div>
 
@@ -102,7 +134,7 @@ export default function Complete({ answers, mode, onEdit }) {
                 transition={{ delay: 0.4, duration: 0.8 }}
               />
             </div>
-            <b>{rec.confidence}%</b>
+            <b>{confidence}%</b>
           </div>
 
           <p className="rc-note">{rec.note}</p>
