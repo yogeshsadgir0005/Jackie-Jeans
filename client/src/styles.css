@@ -1942,3 +1942,220 @@ h1.title {
   transform: translateX(5px);
 }
 
+/* =========================================================================
+   DARK THEME — aligned to the main site (jackie-jeans.vercel.app)
+   Only colours change. Layout, fonts, components, animations and logic are
+   untouched. Black canvas · white text · the same orange + denim accents.
+   ========================================================================= */
+:root {
+  /* surfaces */
+  --cream: #0a0a0c;     /* page background (near-black, matches the main site) */
+  --cream-2: #14141b;   /* subtle elevation used in the background wash */
+  --paper: #16161d;     /* cards / inputs / bubbles */
+
+  /* text */
+  --ink: #f4f1ec;       /* primary (near-white) */
+  --ink-soft: #abaab4;  /* secondary */
+  --ink-faint: #71707b; /* muted */
+
+  /* hairlines now light-on-dark */
+  --line: rgba(255, 255, 255, 0.1);
+  --line-strong: rgba(255, 255, 255, 0.2);
+
+  /* indigo / denim / accent / good are already on-brand — kept as-is */
+
+  /* shadows recomputed for a dark canvas */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.65);
+  --shadow-card:
+    0 1px 1px rgba(0, 0, 0, 0.5),
+    0 6px 14px rgba(0, 0, 0, 0.45),
+    0 20px 44px rgba(0, 0, 0, 0.5);
+  --shadow-float:
+    0 2px 6px rgba(0, 0, 0, 0.5),
+    0 16px 30px rgba(0, 0, 0, 0.55),
+    0 40px 70px rgba(0, 0, 0, 0.6);
+}
+
+/* `--paper` used to double as "light text on dark surfaces"; now that it is a
+   dark surface, restore light text on those dark cards. */
+.mode-card.voice,
+.landing .mode-card.voice,
+.reccard {
+  color: #f4f1ec;
+}
+
+/* Primary + mic buttons read as light pills with dark text — same language as
+   the site's "Start scan" button. */
+.mic-btn {
+  color: #15151b;
+}
+.mic-btn.recording {
+  color: #fff;
+}
+
+/* Subtle interactive fills flip from dark-on-light to light-on-dark. */
+.iconbtn:hover { background: rgba(255, 255, 255, 0.06); }
+.iconbtn:active { background: rgba(255, 255, 255, 0.09); }
+.btn-ghost:hover,
+.btn-text:hover,
+.btn-back:hover { background: rgba(255, 255, 255, 0.05); }
+.progress { background: rgba(255, 255, 255, 0.12); }
+
+/* Tiles / inputs that were var(--cream) need a hair of elevation on black. */
+.choice-icon { background: rgba(255, 255, 255, 0.06); }
+.choice.selected {
+  background: #1b1b23;
+  border-color: var(--denim-light);
+  box-shadow: 0 0 0 2px rgba(111, 140, 184, 0.35), var(--shadow-md);
+}
+.choice.selected .tick {
+  background: var(--denim);
+  border-color: var(--denim);
+}
+.choice.selected .choice-icon { background: var(--indigo); }
+.custom-select-option:hover { background: rgba(255, 255, 255, 0.07); }
+.custom-select-option.active {
+  background: rgba(111, 140, 184, 0.16);
+  color: var(--denim-light);
+}
+.custom-select-options::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+}
+.sizerow input {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--ink);
+}
+.sizerow input:focus { background: rgba(255, 255, 255, 0.1); }
+
+/* mode-card.manual is now a dark elevated surface. */
+.mode-card.manual .mc-icon,
+.landing .mode-card.manual .mc-icon { background: rgba(255, 255, 255, 0.06); }
+.landing .mode-card.manual .mc-arrow {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--denim-light);
+}
+.landing .mode-card.manual::before { border-color: rgba(255, 255, 255, 0.16); }
+
+/* Denim accents that were too dark to read on black. */
+.seal-text { fill: var(--denim-light); }
+.landing .hero-em { color: var(--denim-light); }
+.q-index { color: var(--denim-light); }
+.chiplog .c {
+  background: rgba(111, 140, 184, 0.15);
+  color: var(--denim-light);
+}
+
+/* "Unsupported browser" notice → dark variant. */
+.unsupported {
+  background: rgba(232, 98, 61, 0.12);
+  border-color: rgba(232, 98, 61, 0.4);
+  color: var(--accent-soft);
+}
+
+/* Film grain: `multiply` is invisible on black — switch to a lightening blend. */
+.app::after {
+  mix-blend-mode: screen;
+  opacity: 0.045;
+}
+
+/* ── Icon / element visibility on dark tiles ──────────────────────────────
+   These used dark indigo/denim ink that disappears on a dark surface. */
+.choice-icon {
+  color: var(--denim-light);
+}
+.mode-card.manual .mc-icon,
+.landing .mode-card.manual .mc-icon {
+  color: var(--denim-light);
+}
+.transcript .you {
+  color: var(--denim-light);
+}
+.selected-count {
+  color: var(--denim-light);
+}
+
+/* Disabled primary button: a clearly-muted dark pill with readable text,
+   instead of a washed-out translucent white one. */
+.btn-primary:disabled {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink-faint);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* =========================================================================
+   BUTTON / ACCENT SYSTEM — matched to the main site
+   Blue = primary actions (like "Start scan" / "Add to bag").
+   Orange = small accents only: selection outlines, badges, highlights.
+   ========================================================================= */
+:root {
+  --brand-blue: #4d78c4;   /* the site's denim-blue CTA */
+  --brand-blue-2: #5c87d1; /* hover */
+}
+
+/* All primary CTAs become the blue pill. */
+.btn-primary,
+.btn-accent,
+.mic-btn {
+  background: var(--brand-blue);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 10px 26px rgba(77, 120, 196, 0.35);
+}
+.btn-primary:hover,
+.btn-accent:hover,
+.mic-btn:hover {
+  background: var(--brand-blue-2);
+  box-shadow: 0 14px 34px rgba(77, 120, 196, 0.45);
+}
+.btn-primary > *,
+.btn-accent > *,
+.mic-btn > * { color: #fff; }
+
+/* Keep the muted disabled look (overrides the blue above). */
+.btn-primary:disabled,
+.mic-btn:disabled {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink-faint);
+  box-shadow: none;
+}
+/* Recording stays a warm active accent (small, meaningful orange). */
+.mic-btn.recording {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 10px 28px rgba(232, 98, 61, 0.4);
+}
+
+/* Progress fill → brighter on-theme blue. */
+.progress > span {
+  background: linear-gradient(90deg, var(--brand-blue), var(--denim-light));
+}
+
+/* Selection uses the same blue as the buttons — one cohesive interactive
+   colour, not a stray orange. */
+.choice.selected {
+  border-color: var(--brand-blue);
+  box-shadow: 0 0 0 2px rgba(77, 120, 196, 0.4), var(--shadow-md);
+}
+.choice.selected .tick {
+  background: var(--brand-blue);
+  border-color: var(--brand-blue);
+}
+.choice.selected .choice-icon {
+  background: var(--indigo);
+  color: #fff;
+}
+.chip.selected {
+  background: var(--brand-blue);
+  border-color: var(--brand-blue);
+  color: #fff;
+}
+.custom-select-option.active {
+  background: rgba(77, 120, 196, 0.18);
+  color: var(--denim-light);
+}
+.custom-select-check { color: var(--brand-blue); }
+
