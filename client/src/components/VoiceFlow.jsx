@@ -39,6 +39,34 @@ export default function VoiceFlow({ answers, setAnswers, onComplete, onExit }) {
   const [typeVal, setTypeVal] = useState('')
   const [skippable, setSkippable] = useState(false)
 
+  const [navIndex, setNavIndex] = useState(0)
+  const [isReviewing, setIsReviewing] = useState(false)
+  const isReviewingRef = useRef(false)
+  const furthestIndexRef = useRef(0)
+  const reviewResolveRef = useRef(null)
+  const navQueueRef = useRef(null)
+
+  function goBack() {
+    if (manualResolveRef.current) manualResolveRef.current('', 'back')
+    else if (reviewResolveRef.current) reviewResolveRef.current('back')
+    else if (status === 'speaking') {
+      navQueueRef.current = 'back'
+      stopSpeaking()
+    }
+  }
+  function goForward() {
+    if (manualResolveRef.current) manualResolveRef.current('', 'forward')
+    else if (reviewResolveRef.current) reviewResolveRef.current('forward')
+    else if (status === 'speaking') {
+      navQueueRef.current = 'forward'
+      stopSpeaking()
+    }
+  }
+  function resubmitAnswer() {
+    if (reviewResolveRef.current) reviewResolveRef.current('resubmit')
+  }
+
+
   const recognizerRef = useRef(null)
   const manualResolveRef = useRef(null) // resolves the current listen turn
   const cancelledRef = useRef(false)
@@ -73,6 +101,11 @@ export default function VoiceFlow({ answers, setAnswers, onComplete, onExit }) {
 
   // Resolves with { text, source } from voice, typed input, or a control.
   function getAnswer({ optional }) {
+    if (navQueueRef.current) {
+      const action = navQueueRef.current
+      navQueueRef.current = null
+      return Promise.resolve({ text: '', source: action })
+    }
     setSkippable(!!optional)
     return new Promise((resolve) => {
       let done = false
@@ -118,22 +151,63 @@ export default function VoiceFlow({ answers, setAnswers, onComplete, onExit }) {
     await say(
       "Wonderful. Let's find your perfect fit. " + QUESTIONS[0].voicePrompt
     )
-    for (let i = 0; i < QUESTIONS.length; i++) {
+    let i = 0
+    while (i < QUESTIONS.length) {
       const q = QUESTIONS[i]
       if (cancelledRef.current) return
 
-      // The sizes step speaks its own per-brand prompts (its voicePrompt is a
-      // "{brand}" template), so skip the generic question read for it.
-      if (i > 0 && q.id !== 'sizes') await say(q.voicePrompt)
-
-      if (q.id === 'brands') {
-        await handleBrands(q)
-      } else if (q.id === 'sizes') {
-        await handleSizes(q)
-      } else {
-        await handleStandard(q)
-      }
       setProgress(q.index)
+
+      if (isReviewingRef.current) {
+        setIsReviewing(true)
+        setBubble("Reviewing: " + q.voicePrompt)
+        setStatus('idle')
+        const action = await new Promise(r => { reviewResolveRef.current = r })
+        setIsReviewing(false)
+        reviewResolveRef.current = null
+        if (cancelledRef.current) return
+        
+        if (action === 'back') {
+          i = Math.max(0, i - 1)
+          isReviewingRef.current = true
+          continue
+        } else if (action === 'forward') {
+          i = Math.min(furthestIndexRef.current, i + 1)
+          isReviewingRef.current = i < furthestIndexRef.current
+          continue
+        }
+        
+        // If resubmit, say the prompt and let it fall through to handle function
+        await say(q.voicePrompt)
+      } else {
+        if (i > 0 && q.id !== 'sizes') {
+          await say(q.voicePrompt)
+        }
+      }
+
+      let result
+      if (q.id === 'brands') {
+        result = await handleBrands(q)
+      } else if (q.id === 'sizes') {
+        result = await handleSizes(q)
+      } else {
+        result = await handleStandard(q)
+      }
+
+      if (result === 'back') {
+        i = Math.max(0, i - 1)
+        isReviewingRef.current = true
+        continue
+      }
+      if (result === 'forward') {
+        i = Math.min(furthestIndexRef.current, i + 1)
+        isReviewingRef.current = i < furthestIndexRef.current
+        continue
+      }
+
+      i++
+      furthestIndexRef.current = Math.max(furthestIndexRef.current, i)
+      setNavIndex(furthestIndexRef.current)
     }
 
     if (cancelledRef.current) return
@@ -150,6 +224,8 @@ export default function VoiceFlow({ answers, setAnswers, onComplete, onExit }) {
     while (!cancelledRef.current) {
       const { text, source } = await getAnswer({ optional: q.optional })
       if (cancelledRef.current) return
+      if (source === 'back') return 'back'
+      if (source === 'forward') return 'forward'
       if (source === 'repeat') {
         await say(q.voicePrompt)
         continue
@@ -211,6 +287,8 @@ export default function VoiceFlow({ answers, setAnswers, onComplete, onExit }) {
     while (!cancelledRef.current) {
       const { text, source } = await getAnswer({ optional: true })
       if (cancelledRef.current) return
+      if (source === 'back') return 'back'
+      if (source === 'forward') return 'forward'
       if (source === 'repeat') {
         await say(q.voicePrompt)
         continue
@@ -267,6 +345,8 @@ export default function VoiceFlow({ answers, setAnswers, onComplete, onExit }) {
       while (!cancelledRef.current) {
         const { text, source } = await getAnswer({ optional: true })
         if (cancelledRef.current) return
+        if (source === 'back') return 'back'
+        if (source === 'forward') return 'forward'
         if (source === 'repeat') {
           await say(`What size in ${brand}?`)
           continue
@@ -299,7 +379,15 @@ export default function VoiceFlow({ answers, setAnswers, onComplete, onExit }) {
   }
 
   function pushLog(q, value) {
-    setLog((l) => [...l, { id: q.id, label: SHORT[q.id] || q.label, value }])
+    setLog((l) => {
+      const idx = l.findIndex((x) => x.id === q.id)
+      if (idx !== -1) {
+        const copy = [...l]
+        copy[idx] = { id: q.id, label: SHORT[q.id] || q.label, value }
+        return copy
+      }
+      return [...l, { id: q.id, label: SHORT[q.id] || q.label, value }]
+    })
   }
 
   // ── UI actions ────────────────────────────────────────────────────────────
@@ -419,15 +507,29 @@ export default function VoiceFlow({ answers, setAnswers, onComplete, onExit }) {
 
           {started && (
             <div className="voice-row">
-              <button className="btn btn-text" onClick={repeat}>
-                <Refresh size={16} /> Repeat
-              </button>
-              <button
-                className="btn btn-text"
-                onClick={() => setTyping((t) => !t)}
-              >
-                <Keyboard size={16} /> Type instead
-              </button>
+              {progress > 1 && (
+                <button className="btn btn-text" onClick={goBack}>
+                  <ArrowLeft size={16} /> Back
+                </button>
+              )}
+              {isReviewing && furthestIndexRef.current > progress - 1 && (
+                <button className="btn btn-text" onClick={goForward}>
+                   Forward <ArrowRight size={16} />
+                </button>
+              )}
+              {status === 'listening' && (
+                <>
+                  <button className="btn btn-text" onClick={repeat}>
+                    <Refresh size={16} /> Repeat
+                  </button>
+                  <button
+                    className="btn btn-text"
+                    onClick={() => setTyping((t) => !t)}
+                  >
+                    <Keyboard size={16} /> Type instead
+                  </button>
+                </>
+              )}
               {skippable && (
                 <button className="btn btn-text" onClick={skip}>
                   Skip ›
@@ -439,9 +541,11 @@ export default function VoiceFlow({ answers, setAnswers, onComplete, onExit }) {
       </div>
 
       <div className="footer">
-        <button className="btn btn-back" onClick={onExit} aria-label="Back">
-          <ArrowLeft size={28} />
-        </button>
+        {progress <= 1 && (
+          <button className="btn btn-back" onClick={onExit} aria-label="Back">
+            <ArrowLeft size={28} />
+          </button>
+        )}
 
         {!started ? (
           <button className="mic-btn" style={{ flex: 1 }} onClick={begin}>
@@ -462,6 +566,11 @@ export default function VoiceFlow({ answers, setAnswers, onComplete, onExit }) {
             </button>
           </form>
         ) : (
+          isReviewing ? (
+          <button className="mic-btn recording" style={{ flex: 1, background: 'var(--indigo)' }} onClick={resubmitAnswer}>
+            <Refresh /> Resubmit answer
+          </button>
+        ) : (
           <button
             className={`mic-btn ${status === 'listening' ? 'recording' : ''}`}
             style={{ flex: 1 }}
@@ -478,6 +587,7 @@ export default function VoiceFlow({ answers, setAnswers, onComplete, onExit }) {
               </>
             )}
           </button>
+        )
         )}
       </div>
     </div>
